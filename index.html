@@ -1,0 +1,497 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>工业热泵标准速查手册</title>
+    <style>
+        /* --- 1. 基本样式 --- */
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+            line-height: 1.6;
+            background-color: #f8f9fa;
+            color: #212529;
+            margin: 0;
+            padding: 20px;
+        }
+        h1 {
+            color: #004a99;
+            text-align: center;
+            border-bottom: 2px solid #dee2e6;
+            padding-bottom: 10px;
+        }
+        footer {
+            text-align: center;
+            margin-top: 30px;
+            font-size: 0.9em;
+            color: #6c757d;
+        }
+
+        /* --- 2. 控制区 --- */
+        .controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-bottom: 20px;
+            padding: 15px;
+            background-color: #ffffff;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+        .controls input[type="search"],
+        .controls select {
+            flex-grow: 1;
+            padding: 10px;
+            font-size: 1em;
+            border: 1px solid #ced4da;
+            border-radius: 5px;
+        }
+        .controls input[type="search"] {
+            min-width: 200px;
+        }
+        .controls select {
+            min-width: 150px;
+        }
+        .controls .toggle {
+            display: flex;
+            align-items: center;
+            padding: 10px;
+            background-color: #f1f3f5;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        .controls .toggle input {
+            margin-right: 8px;
+            cursor: pointer;
+        }
+
+        /* --- 3. 表格区 --- */
+        .table-container {
+            overflow-x: auto; /* 关键：在小屏幕上启用水平滚动 */
+            background-color: #ffffff;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 800px; /* 确保在宽屏上有足够空间 */
+        }
+        th, td {
+            border: 1px solid #dee2e6;
+            padding: 12px;
+            text-align: left;
+            vertical-align: top;
+        }
+        th {
+            background-color: #e9ecef;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+        tbody tr:nth-child(odd) {
+            background-color: #f8f9fa;
+        }
+        tbody tr:hover {
+            background-color: #e2e6ea;
+        }
+
+        /* --- 4. 高亮样式 --- */
+        .status-latest {
+            background-color: #fff3cd; /* 淡黄色高亮 */
+        }
+        .status-upcoming {
+            background-color: #d1e7dd; /* 淡绿色高亮 */
+            font-weight: bold;
+        }
+        .status-latest .std-number,
+        .status-upcoming .std-number {
+            font-weight: bold;
+        }
+
+    </style>
+</head>
+<body>
+
+    <h1>工业热泵标准速查手册</h1>
+
+    <div class="controls">
+        <input type="search" id="searchInput" placeholder="搜索标准号、名称、核心内容...">
+        <select id="categoryFilter">
+            <option value="all">所有分类</option>
+            </select>
+        <label class="toggle">
+            <input type="checkbox" id="latestOnlyToggle">
+            仅显示最新/即将实施
+        </label>
+    </div>
+
+    <div class="table-container">
+        <table>
+            <thead>
+                <tr>
+                    <th>标准分类</th>
+                    <th>标准号</th>
+                    <th>标准名称</th>
+                    <th>核心内容与适用范围</th>
+                </tr>
+            </thead>
+            <tbody id="standardsTableBody">
+                </tbody>
+        </table>
+    </div>
+
+    <footer>
+        <p>数据来源：工业热泵标准整理20250824 | 编制：荆炎荣</p>
+    </footer>
+
+    <script>
+        // --- 1. 数据模型 ---
+        const standardsData = [
+            {
+                "category": "安全与环保 (基础)",
+                "stdNumber": "GB/T 9237-2017",
+                "stdName": "制冷系统和热泵 安全与环境要求",
+                "coreContent": "等同采用ISO 5149，是所有热泵产品设计、制造和安装的安全基石。",
+                "status": "current"
+            },
+            {
+                "category": "安全与环保 (基础)",
+                "stdNumber": "GB 4706.32-2012",
+                "stdName": "家用和类似用途电器的安全 热泵、空调器和除湿机的特殊要求",
+                "coreContent": "对应IEC 60335-2-40，是所有含电气部件的热泵产品的电气安全底线。",
+                "status": "current"
+            },
+            {
+                "category": "安全与环保 (基础)",
+                "stdNumber": "GB 25131-2010",
+                "stdName": "蒸气压缩循环冷水(热泵)机组 安全要求",
+                "coreContent": "针对冷水（热泵）机组的专项安全要求。",
+                "status": "current"
+            },
+            {
+                "category": "压缩式热泵 - 基础与中低温 (≤ 95°C)",
+                "stdNumber": "GB/T 18430.1-2024",
+                "stdName": "(最新版) 蒸气压缩循环冷水(热泵)机组 第1部分：工业或商业用及类似用途的冷水(热泵)机组",
+                "coreContent": "(最新版) 提供了中低温热泵性能测试的基础方法。",
+                "status": "latest"
+            },
+            {
+                "category": "压缩式热泵 - 基础与中低温 (≤ 95°C)",
+                "stdNumber": "GB/T 10870-2014",
+                "stdName": "蒸气压缩循环冷水(热泵)机组 性能试验方法",
+                "coreContent": "基础性能试验方法标准，GB/T 18430.1的引用标准之一。",
+                "status": "current"
+            },
+            {
+                "category": "压缩式热泵 - 基础与中低温 (≤ 95°C)",
+                "stdNumber": "JBT 4330-1999",
+                "stdName": "制冷和空调设备噪声的测定",
+                "coreContent": "噪声测试的基础方法标准。",
+                "status": "current"
+            },
+            {
+                "category": "压缩式热泵 - 基础与中低温 (≤ 95°C)",
+                "stdNumber": "GB/T 19409-2013",
+                "stdName": "水(地)源热泵机组",
+                "coreContent": "专门针对水(地)源热泵，是工业领域利用废水、地热等余热的核心标准。",
+                "status": "current"
+            },
+            {
+                "category": "压缩式热泵 - 基础与中低温 (≤ 95°C)",
+                "stdNumber": "GB/T 21363-2017",
+                "stdName": "转速可控型空气源热泵(冷水)机组",
+                "coreContent": "针对变频技术，对机组的季节性能和调节能力提出了要求。",
+                "status": "current"
+            },
+            {
+                "category": "压缩式热泵 - 基础与中低温 (≤ 95°C)",
+                "stdNumber": "GB/T 21362-2023",
+                "stdName": "(最新版) 商业或工业用及类似用途的热泵热水机",
+                "coreContent": "(此为 GB 21362-2008 的更新版本) 商业及工业用热泵热水机产品标准。",
+                "status": "latest"
+            },
+            {
+                "category": "压缩式热泵 - 基础与中低温 (≤ 95°C)",
+                "stdNumber": "GB/T 25127.1-2020",
+                "stdName": "(最新版) 低环境温度空气源热泵(冷水)机组 第1部分：工业或商业用及类似用途的热泵(冷水)机组",
+                "coreContent": "(此为 GB/T 25127.1-2010 的更新版本) 针对北方寒冷地区应用。",
+                "status": "latest"
+            },
+            {
+                "category": "压缩式热泵 - 基础与中低温 (≤ 95°C)",
+                "stdNumber": "GB 25127.2-2020",
+                "stdName": "低环境温度空气源热泵(冷水)机组 第2部分：户用及类似用途的热泵(冷水)机组",
+                "coreContent": "低温空气源热泵的户用部分标准。",
+                "status": "current"
+            },
+            {
+                "category": "压缩式热泵 - 基础与中低温 (≤ 95°C)",
+                "stdNumber": "GB/T 25861-2023",
+                "stdName": "(最新版) 蒸气压缩循环水源高温热泵机组",
+                "coreContent": "(最新版) 专门针对中国市场的水源高温热泵产品，是目前工业高温热水应用最直接、最重要的产品标准。",
+                "status": "latest"
+            },
+            {
+                "category": "压缩式热泵 - 基础与中低温 (≤ 95°C)",
+                "stdNumber": "JB/T 12853-2016",
+                "stdName": "工业用及类似用途的热泵热水机",
+                "coreContent": "核心工业热水标准。专门定义了“工业用”热泵，其温度范围与 GB/T 25861 互为补充。",
+                "status": "current"
+            },
+            {
+                "category": "压缩式热泵 - 基础与中低温 (≤ 95°C)",
+                "stdNumber": "GB/T 21087-2007",
+                "stdName": "空气-空气能量回收装置",
+                "coreContent": "热泵系统中常用的能量回收部件标准。",
+                "status": "current"
+            },
+            {
+                "category": "评价与准入标准",
+                "stdNumber": "GB/T 19577-2024",
+                "stdName": "(最新版) 热泵和冷水机组能效限定值及能效等级",
+                "coreContent": "热泵的能效“及格线”和“标尺”。其范围已明确覆盖GB/T 25861规定的高温热泵。",
+                "status": "latest"
+            },
+            {
+                "category": "评价与准入标准",
+                "stdNumber": "GB 19576-2019",
+                "stdName": "热泵热水机(器)能效限定值及能效等级",
+                "coreContent": "市场准入门槛，规定了热泵热水机的最低能效要求和等级划分。",
+                "status": "current"
+            },
+            {
+                "category": "热风与烘干",
+                "stdNumber": "JB/T 13578-2018",
+                "stdName": "空气源热泵干燥装置",
+                "coreContent": "专门针对使用空气源热泵进行物料干燥的设备。",
+                "status": "current"
+            },
+            {
+                "category": "热风与烘干",
+                "stdNumber": "NB/T 34040-2016",
+                "stdName": "热泵式粮食烘干机",
+                "coreContent": "能源行业标准，针对粮食烘干这一特定工业应用场景。",
+                "status": "current"
+            },
+            {
+                "category": "吸收式热泵 (余热驱动)",
+                "stdNumber": "GB/T 18362-2019",
+                "stdName": "(最新版) 溴化锂吸收式冷(温)水机组",
+                "coreContent": "中国吸收式设备的核心标准，侧重制冷或冷热联供(第一类)。",
+                "status": "latest"
+            },
+            {
+                "category": "吸收式热泵 (余热驱动)",
+                "stdNumber": "JB/T 14619-2022",
+                "stdName": "吸收式热泵",
+                "coreContent": "更聚焦于“热泵”功能，对以升温为目的的吸收式热泵(第二类)有最强指导意义。",
+                "status": "current"
+            },
+            {
+                "category": "CO₂(R744) 热泵 (专用)",
+                "stdNumber": "GB/T 29707-2013",
+                "stdName": "跨临界二氧化碳(CO₂)热泵热水机",
+                "coreContent": "中国最早的CO₂热泵产品标准之一，奠定了跨临界循环测试的基础。",
+                "status": "current"
+            },
+            {
+                "category": "CO₂(R744) 热泵 (专用)",
+                "stdNumber": "NB/T 10778-2021",
+                "stdName": "二氧化碳空气源热泵热水器",
+                "coreContent": "最新的CO₂热泵热水器行业标准，技术要求更贴近当前市场。",
+                "status": "current"
+            },
+            {
+                "category": "蒸汽 (高温突破)",
+                "stdNumber": "NB/T 11236-2023",
+                "stdName": "二氧化碳空气源热泵供暖机组",
+                "coreContent": "专门针对CO₂热泵在供暖场景的应用，关注其在低温环境下的性能。",
+                "status": "current"
+            },
+            {
+                "category": "蒸汽 (高温突破)",
+                "stdNumber": "GB/T 45650-2025",
+                "stdName": "(即将实施) 二氧化碳空气源热泵蒸汽机组",
+                "coreContent": "里程碑式标准，首次为热泵产出蒸汽提供了国家标准，且明确基于CO₂技术路线。",
+                "status": "upcoming"
+            },
+            {
+                "category": "蒸汽 (高温突破)",
+                "stdNumber": "JB/T 15213-2025",
+                "stdName": "(报批稿/即将实施) 蒸气压缩循环热泵型蒸汽发生机组",
+                "coreContent": "(此为PDF中报批稿的确认编号) 更具普适性的蒸汽热泵国标，不限定工质，系统规定了技术要求、试验方法和能效限值。",
+                "status": "upcoming"
+            },
+            {
+                "category": "工程施工与验收",
+                "stdNumber": "GB 50235-2010",
+                "stdName": "工业金属管道工程施工规范",
+                "coreContent": "工业管道安装的施工规范。",
+                "status": "current"
+            },
+            {
+                "category": "工程施工与验收",
+                "stdNumber": "GB 50254-2014",
+                "stdName": "(最新版) 电气装置安装工程低压电器施工及验收规范",
+                "coreContent": "电气安装与验收规范。",
+                "status": "latest"
+            },
+            {
+                "category": "工程施工与验收",
+                "stdNumber": "GBJ 131-90",
+                "stdName": "自动化仪表安装工程质量检验评定标准",
+                "coreContent": "自动化仪表安装规范 (注：此为较早标准，请核实项目适用性)。",
+                "status": "current"
+            },
+            {
+                "category": "工程施工与验收",
+                "stdNumber": "GB 50236-2011",
+                "stdName": "现场设备、工业管道焊接工程施工规范",
+                "coreContent": "工业管道焊接的施工规范。",
+                "status": "current"
+            },
+            {
+                "category": "工程施工与验收",
+                "stdNumber": "GB 50243-2016",
+                "stdName": "通风与空调工程施工质量验收规范",
+                "coreContent": "暖通空调工程的施工质量验收标准。",
+                "status": "current"
+            },
+            {
+                "category": "工程施工与验收",
+                "stdNumber": "GB 50738-2011",
+                "stdName": "通风与空调工程施工规范",
+                "coreContent": "暖通空调工程的施工过程标准。",
+                "status": "current"
+            },
+            {
+                "category": "工程施工与验收",
+                "stdNumber": "GB/T 4272-2024",
+                "stdName": "(最新版) 设备及管道绝热技术规范",
+                "coreContent": "(此为 GB/T 4272-2008 的更新版本) 设备和管道保温规范。",
+                "status": "latest"
+            },
+            {
+                "category": "工程施工与验收",
+                "stdNumber": "DB11/T 1832.15-2022",
+                "stdName": "建筑工程施工工艺规程 第15部分:通风与空调安装工程",
+                "coreContent": "北京市地方标准，通风空调安装工艺规程。",
+                "status": "current"
+            },
+            {
+                "category": "国际前瞻性标准",
+                "stdNumber": "(TBD/草案) CEN/TS 17990 系列",
+                "stdName": "工业热泵测试与评级 (草案)",
+                "coreContent": "欧洲正在制定的技术规范，旨在为高温工业热泵提供专门的测试和评级方法。",
+                "status": "upcoming"
+            },
+            {
+                "category": "国际前瞻性标准",
+                "stdNumber": "(TBD/草案) VDI 4646",
+                "stdName": "工业热泵的规划、安装、运行和维护 (修订版)",
+                "coreContent": "德国工程师协会(VDI)正在修订此应用指南，被誉为工业热泵项目的“应用圣经”。",
+                "status": "upcoming"
+            }
+        ];
+
+        // --- 2. DOM 元素引用 ---
+        const searchInput = document.getElementById('searchInput');
+        const categoryFilter = document.getElementById('categoryFilter');
+        const latestOnlyToggle = document.getElementById('latestOnlyToggle');
+        const tableBody = document.getElementById('standardsTableBody');
+
+        // --- 3. 核心功能 ---
+
+        /**
+         * 动态填充分类过滤器
+         */
+        function populateCategories() {
+            const categories = new Set(standardsData.map(item => item.category));
+            categories.forEach(category => {
+                const option = document.createElement('option');
+                option.value = category;
+                option.textContent = category;
+                categoryFilter.appendChild(option);
+            });
+        }
+
+        /**
+         * 渲染表格数据
+         * @param {Array} data - 要渲染的标准数组
+         */
+        function renderTable(data) {
+            tableBody.innerHTML = ''; // 清空表格
+
+            if (data.length === 0) {
+                tableBody.innerHTML = '<tr><td colspan="4" style="text-align:center;">未找到匹配的标准</td></tr>';
+                return;
+            }
+
+            data.forEach(item => {
+                const row = document.createElement('tr');
+                
+                // 根据状态添加高亮样式
+                if (item.status === 'latest') {
+                    row.classList.add('status-latest');
+                } else if (item.status === 'upcoming') {
+                    row.classList.add('status-upcoming');
+                }
+
+                row.innerHTML = `
+                    <td>${item.category}</td>
+                    <td class="std-number">${item.stdNumber}</td>
+                    <td>${item.stdName}</td>
+                    <td>${item.coreContent}</td>
+                `;
+                tableBody.appendChild(row);
+            });
+        }
+
+        /**
+         * 过滤并重新渲染表格
+         */
+        function filterAndRender() {
+            const searchText = searchInput.value.toLowerCase().trim();
+            const category = categoryFilter.value;
+            const latestOnly = latestOnlyToggle.checked;
+
+            let filteredData = standardsData;
+
+            // 1. 按分类过滤
+            if (category !== 'all') {
+                filteredData = filteredData.filter(item => item.category === category);
+            }
+
+            // 2. 按状态过滤
+            if (latestOnly) {
+                filteredData = filteredData.filter(item => 
+                    item.status === 'latest' || item.status === 'upcoming'
+                );
+            }
+
+            // 3. 按搜索文本过滤
+            if (searchText) {
+                filteredData = filteredData.filter(item => 
+                    item.stdNumber.toLowerCase().includes(searchText) ||
+                    item.stdName.toLowerCase().includes(searchText) ||
+                    item.coreContent.toLowerCase().includes(searchText)
+                );
+            }
+
+            renderTable(filteredData);
+        }
+
+        // --- 4. 事件监听 ---
+        document.addEventListener('DOMContentLoaded', () => {
+            populateCategories();
+            renderTable(standardsData);
+        });
+
+        searchInput.addEventListener('input', filterAndRender);
+        categoryFilter.addEventListener('change', filterAndRender);
+        latestOnlyToggle.addEventListener('change', filterAndRender);
+
+    </script>
+</body>
+</html>
